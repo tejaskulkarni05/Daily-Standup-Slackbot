@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     )
 
     # Scheduler Configuration
-    default_standup_time: str = Field("09:00", alias="DEFAULT_STANDUP_TIME")
-    scheduler_timezone: str = Field("America/New_York", alias="SCHEDULER_TIMEZONE")
+    default_standup_time: str = Field("09:30", alias="DEFAULT_STANDUP_TIME")
+    scheduler_timezone: str = Field("Asia/Kolkata", alias="SCHEDULER_TIMEZONE")
 
     # Application Configuration
     env: str = Field("dev", alias="ENV")  # dev or prod
