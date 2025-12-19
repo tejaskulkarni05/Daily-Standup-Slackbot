@@ -193,60 +193,11 @@ def build_standup_report_message(
     blockers: Optional[str],
     timestamp: datetime,
 ) -> Dict[str, Any]:
-    """Build the formatted standup report for channel posting.
 
-    Args:
-        user_name: User's display name
-        slack_user_id: Slack user ID
-        feeling: Answer to feeling question
-        yesterday: What they did yesterday
-        today: What they're doing today
-        blockers: Any blockers
-        timestamp: When report was completed
+    def format_answer(text: str) -> str:
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        return "\n".join(f"• {escape_slack_text(line)}" for line in lines)
 
-    Returns:
-        Block Kit message payload
-    """
-    # Build field content
-    fields = []
-
-    if yesterday:
-        fields.append(
-            {
-                "type": "section",
-                "block_id": "section_yesterday",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*What have you done since Yesterday?*\n{escape_slack_text(yesterday)}",
-                },
-            }
-        )
-
-    if today:
-        fields.append(
-            {
-                "type": "section",
-                "block_id": "section_today",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*What will you do Today?*\n{escape_slack_text(today)}",
-                },
-            }
-        )
-
-    if blockers:
-        fields.append(
-            {
-                "type": "section",
-                "block_id": "section_blockers",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*Anything blocking your progress?*\n{escape_slack_text(blockers)}",
-                },
-            }
-        )
-
-    # Build the message blocks
     blocks = [
         {
             "type": "header",
@@ -278,9 +229,27 @@ def build_standup_report_message(
             }
         )
 
-    blocks.extend(fields)
+    blocks.append({"type": "divider"})
 
-    # Footer
+    def add_question(question: str, answer: Optional[str]):
+        if not answer:
+            return
+        blocks.extend([
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*{question}*"},
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": format_answer(answer)},
+            },
+            {"type": "divider"},
+        ])
+
+    add_question("What have you done since yesterday?", yesterday)
+    add_question("What will you do today?", today)
+    add_question("Anything blocking your progress?", blockers or "NA")
+
     timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M %Z")
     blocks.append(
         {
@@ -288,7 +257,7 @@ def build_standup_report_message(
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f"Posted by Daily Standup Bot • {timestamp_str}",
+                    "text": f"Posted by *Daily Standup Bot* • {timestamp_str}",
                 }
             ],
         }
@@ -296,8 +265,14 @@ def build_standup_report_message(
 
     return {
         "text": f"Daily Standup - {user_name}",
-        "blocks": blocks,
+        "attachments": [
+            {
+                "color": "#6E56CF",
+                "blocks": blocks,
+            }
+        ],
     }
+
 
 
 def build_skip_notification_message(user_name: str, slack_user_id: str) -> Dict[str, Any]:
