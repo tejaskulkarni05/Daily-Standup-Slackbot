@@ -76,7 +76,7 @@ async def register_handlers(app: AsyncApp) -> None:
                     await say(
                         text="No pending standup right now. "
                         "I'll send you a standup prompt at the scheduled time. "
-                        "If you want to submit a standup now, use `/standup start`."
+                        # "If you want to submit a standup now, use `/standup start`."
                     )
                     return
 

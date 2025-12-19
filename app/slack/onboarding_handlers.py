@@ -132,7 +132,7 @@ async def register_onboarding_handlers(app: AsyncApp) -> None:
 
                     await respond(message)
 
-                elif subcommand == "":
+                elif subcommand == "" or subcommand == "help":
                     # Show help if no subcommand
                     await respond(
                         "*Daily Standup Bot Commands*\n\n"
