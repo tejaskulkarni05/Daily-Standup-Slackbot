@@ -193,11 +193,40 @@ def build_standup_report_message(
     blockers: Optional[str],
     timestamp: datetime,
 ) -> Dict[str, Any]:
+    """
+    Build a Slack standup report message with colored sections
+    for yesterday / today / blockers (Geekbot-style).
+    """
 
-    def format_answer(text: str) -> str:
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        return "\n".join(f"• {escape_slack_text(line)}" for line in lines)
+    def build_colored_question_attachment(
+        question: str,
+        answer: str,
+        color: str,
+    ) -> Dict[str, Any]:
+        return {
+            "color": color,
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{question}*",
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        # Preserve numbered lists exactly as user typed
+                        "text": escape_slack_text(answer),
+                    },
+                },
+            ],
+        }
 
+    # ─────────────────────────────────────────────
+    # Main (non-colored) blocks
+    # ─────────────────────────────────────────────
     blocks = [
         {
             "type": "header",
@@ -229,27 +258,41 @@ def build_standup_report_message(
             }
         )
 
-    blocks.append({"type": "divider"})
+    # ─────────────────────────────────────────────
+    # Colored attachments (one per question)
+    # ─────────────────────────────────────────────
+    attachments: list[Dict[str, Any]] = []
 
-    def add_question(question: str, answer: Optional[str]):
-        if not answer:
-            return
-        blocks.extend([
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"*{question}*"},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": format_answer(answer)},
-            },
-            {"type": "divider"},
-        ])
+    if yesterday:
+        attachments.append(
+            build_colored_question_attachment(
+                "What have you done since yesterday?",
+                yesterday,
+                "#38BDF8",  # Cyan / Blue
+            )
+        )
 
-    add_question("What have you done since yesterday?", yesterday)
-    add_question("What will you do today?", today)
-    add_question("Anything blocking your progress?", blockers or "NA")
+    if today:
+        attachments.append(
+            build_colored_question_attachment(
+                "What will you do today?",
+                today,
+                "#A855F7",  # Purple
+            )
+        )
 
+    if blockers:
+        attachments.append(
+            build_colored_question_attachment(
+                "Anything blocking your progress?",
+                blockers,
+                "#F97316",  # Orange
+            )
+        )
+
+    # ─────────────────────────────────────────────
+    # Footer
+    # ─────────────────────────────────────────────
     timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M %Z")
     blocks.append(
         {
@@ -265,13 +308,10 @@ def build_standup_report_message(
 
     return {
         "text": f"Daily Standup - {user_name}",
-        "attachments": [
-            {
-                "color": "#6E56CF",
-                "blocks": blocks,
-            }
-        ],
+        "blocks": blocks,
+        "attachments": attachments,
     }
+
 
 
 
