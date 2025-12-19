@@ -115,7 +115,16 @@ async def register_handlers(app: AsyncApp) -> None:
                 if result.get("action") == "next_question":
                     # Ask next question
                     question_index = result.get("question_index", 0)
-                    msg = build_question_message(question_index, "")
+                    previous_report_today = None
+                    
+                    # For question 1 (yesterday), fetch previous report's today answer
+                    if question_index == 1:
+                        report_repo = StandupReportRepository(session)
+                        latest_report = await report_repo.get_latest_by_user(user.id)
+                        if latest_report and latest_report.today:
+                            previous_report_today = latest_report.today
+                    
+                    msg = build_question_message(question_index, "", previous_report_today=previous_report_today)
                     await say(**msg)
                     logger.info(f"Sent question {question_index} to user {user_id}")
 

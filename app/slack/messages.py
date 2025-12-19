@@ -44,12 +44,13 @@ def build_standup_start_message() -> Dict[str, Any]:
     }
 
 
-def build_question_message(question_index: int, message_text: str) -> Dict[str, Any]:
+def build_question_message(question_index: int, message_text: str, previous_report_today: Optional[str] = None) -> Dict[str, Any]:
     """Build a question message for DM.
 
     Args:
         question_index: 0=feeling, 1=yesterday, 2=today, 3=blockers
         message_text: The question text
+        previous_report_today: Optional text from previous report's 'today' answer
 
     Returns:
         Block Kit message payload
@@ -68,6 +69,11 @@ def build_question_message(question_index: int, message_text: str) -> Dict[str, 
 
     # Questions 1 and 3 (yesterday and today) use simple text input
     if question_index in [1, 2, 3]:
+        # For question 1 (yesterday), include previous report's today if available
+        question_text = question_title
+        if question_index == 1 and previous_report_today:
+            question_text += f"\n\nIn your previous report you mentioned: _{escape_slack_text(previous_report_today)}_"
+        
         return {
             "text": f"Standup Q{question_index + 1}",
             "blocks": [
@@ -75,7 +81,7 @@ def build_question_message(question_index: int, message_text: str) -> Dict[str, 
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*Question {question_index + 1} of 4:*\n{question_title}\n\nJust type your answer below and press Enter!",
+                        "text": f"*Question {question_index + 1} of 4:*\n{question_text}\n\nJust type your answer below and press Enter!",
                     },
                 },
                 # {

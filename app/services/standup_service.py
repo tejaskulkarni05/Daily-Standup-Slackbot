@@ -201,12 +201,18 @@ async def handle_skip_today(
         logger.warning(f"No pending state for user {slack_user_id}")
         return {"action": "error", "message": "No pending standup"}
 
-    # Create skipped report
-    await report_repo.create(
-        user_id=user.id,
-        report_date=state.pending_report_date,
-        skipped=True,
-    )
+    # Create or update skipped report
+    report = await report_repo.get_by_user_date(user.id, state.pending_report_date)
+    if report:
+        # Report already exists, mark it as skipped
+        await report_repo.update(report.id, skipped=True)
+    else:
+        # Create new skipped report
+        await report_repo.create(
+            user_id=user.id,
+            report_date=state.pending_report_date,
+            skipped=True,
+        )
 
     # Delete state
     await state_repo.delete(user.id)
