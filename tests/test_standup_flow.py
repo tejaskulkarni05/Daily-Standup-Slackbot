@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from app.main import app
+from main import app
 from app.db.base import Base, get_session
 from app.db.repository import (
     UserRepository,
