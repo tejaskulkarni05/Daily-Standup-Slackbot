@@ -370,12 +370,12 @@ async def post_report_to_channel(
         # Post to channel
         await _post_to_channel(
             slack_client,
-            settings.slack_default_channel,
+            workspace.report_channel_id,
             message,
         )
 
-        logger.info(f"Posted report {report_id} to channel {settings.slack_default_channel}")
-        return {"action": "posted", "channel": settings.slack_default_channel}
+        logger.info(f"Posted report {report_id} to channel {workspace.report_channel_id}")
+        return {"action": "posted", "channel": workspace.report_channel_id}
 
     except Exception as e:
         logger.error(f"Error posting report to channel: {e}", exc_info=True)
